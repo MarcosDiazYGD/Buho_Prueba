@@ -1,12 +1,24 @@
 import { useEffect, useState } from 'react'
 import PokeCard from './components/PokeCard'
 import './App.css'
+import Searcher from './components/Searcher'
 
 function App() {
-  let offset = 0
-  let limit = 100
+  const [pokemonsGroup, setpokemonsGroup] = useState([])
+  const [pokemonData, setPokemonData] = useState({})
+  const [darkTheme, setDarkTheme] = useState(false)
   const [response, setResponse] = useState([])
+  const [buttons, setButtons] = useState([])
+
+  let offset = 0
+  let limit = 101
   const URL = `https://pokeapi.co/api/v2/pokemon?offset=${offset}&limit=${limit}`
+
+  // PAGINATION //
+
+  const pokemonsByGroup = 10
+  let indexStart
+  let indexEnd
 
   useEffect(() => {
     fetch(URL)
@@ -15,50 +27,62 @@ function App() {
       .catch((err) => console.warn(err));
   }, [])
 
+  const changeGroup = (index) => {
+    indexStart = (index - 1) * pokemonsByGroup
+    indexEnd = index * pokemonsByGroup
 
-  //pagination
-  const [pokemonsGroup, setpokemonsGroup] = useState([])
-  const pokekmonsByGroup = 10
-  let indexStart = 0
-  let indexEnd = 10
-  const buttons = []
-
-  const changeGroup =() => {
-    indexStart
-    indexEnd
-    const newGroup = response.slice( )
-
-    setpokemonsGroup( )
+    const newGroup = response.slice(indexStart, indexEnd)
+    setpokemonsGroup(newGroup)
   }
 
   const renderButtons = () => {
-    const numberOfButtons = limit / pokekmonsByGroup
-    for (let i = 1; i < numberOfButtons; i++) {
-      buttons.push((
-        <button key={i} onClick={changeGroup}>{i}</button>
-      ))
+    const numberOfButtons = Math.ceil(limit / pokemonsByGroup)
+    const buttonsGroup = []
+    for (let i = 1; i <= numberOfButtons; i++) {
+
+      buttonsGroup.push((<button key={i} onClick={() => changeGroup(i)} >{i}</button>))
     }
-
-    return buttons.map(button => (button))
-
+    return setButtons(buttonsGroup)
   }
 
+  useEffect(() => {
+    response && changeGroup(1)
+    renderButtons()
+  }, [response])
 
+  const getPokemonData = (data) => {
+    setPokemonData(data)
+  }
   return (
-    <>
-      <h1>Pokemons</h1>
-      {renderButtons()}
-      <ul>
-        {
-          response.map(pokeData => (
-            <li key={pokeData.url}>
-              <PokeCard url={pokeData.url} name={pokeData.name} />
-            </li>
-          ))
+    <div className={darkTheme ? 'App dark-theme' : 'App'}>
 
+      <div className='container__nav'>
+        <div></div>
+        <h1>POKEMONS</h1>
+        <button onClick={() => setDarkTheme(prev => prev = !prev)} className='button__dark-theme'><i className='bx bx-moon bx-md'></i></button>
+      </div>
+
+      <Searcher />
+
+      <div className="container__buttons--pagination">
+        {response ? buttons.map(button => (button)) : null}
+      </div>
+
+      <ul className='container__cards'>
+        {pokemonsGroup ?
+          pokemonsGroup?.map(pokeData => (
+            <li key={pokeData.url} className='card'>
+              <PokeCard url={pokeData.url} name={pokeData.name} getPokemonData={getPokemonData} />
+            </li>
+          )) : <div class="loader"></div>
         }
       </ul>
-    </>
+
+      <div className="container__buttons--pagination">
+        {buttons.map(button => (button))}
+      </div>
+
+    </div>
   )
 }
 
